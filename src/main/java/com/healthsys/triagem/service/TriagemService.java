@@ -1,6 +1,8 @@
 package com.healthsys.triagem.service;
 
-import com.healthsys.triagem.TriagemRepository;
+import com.healthsys.triagem.event.TriagemRealizadaEvent;
+import com.healthsys.triagem.producer.TriagemProducer;
+import com.healthsys.triagem.repository.TriagemRepository;
 import com.healthsys.triagem.entity.TriagemEntity;
 import com.healthsys.triagem.enums.NivelRisco;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,9 @@ public class TriagemService {
 
     @Autowired
     private TriagemRepository triagemRepository;
+
+    @Autowired
+    private TriagemProducer triagemProducer;
 
     public TriagemEntity classificarRisco (Long pacienteId, String nome) {
         NivelRisco nivelRisco;
@@ -27,6 +32,14 @@ public class TriagemService {
                 .pacienteId(pacienteId)
                 .nivelRisco(nivelRisco)
                 .build();
+
+        triagemProducer.enviarEvento(
+                new TriagemRealizadaEvent(
+                        pacienteId,
+                        nome,
+                        nivelRisco.name()
+                )
+        );
 
         return triagemRepository.save(triagem);
 

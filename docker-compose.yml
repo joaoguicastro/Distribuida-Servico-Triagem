@@ -1,11 +1,6 @@
-version: '3.9'
-
 services:
-
   servico-triagem:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: healthsys-servico-triagem
     ports:
       - "8083:8083"
@@ -20,16 +15,8 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - healthsys-network-pacientes
-      - healthsys-network-gateway
+      - healthsys-network
     restart: unless-stopped
-    entrypoint: ["sh", "-c", "sleep 10 && java -jar app.jar"]
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8083/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   postgres:
     image: postgres:16-alpine
@@ -40,25 +27,16 @@ services:
       POSTGRES_DB: triagem_db
       POSTGRES_USER: healthsys
       POSTGRES_PASSWORD: healthsys
-    volumes:
-      - postgres-triagem-data:/var/lib/postgresql/data
     networks:
-      - healthsys-network-pacientes
+      - healthsys-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U healthsys -d triagem_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
-
-volumes:
-  postgres-triagem-data:
-    driver: local
+      start_period: 30s
 
 networks:
-  healthsys-network-pacientes:
-    external: true
-
-  healthsys-network-gateway:
+  healthsys-network:
     external: true
