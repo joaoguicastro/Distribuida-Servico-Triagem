@@ -1,0 +1,42 @@
+services:
+  servico-triagem:
+    build: .
+    container_name: healthsys-servico-triagem
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: triagem_db
+      DB_USER: healthsys
+      DB_PASS: healthsys
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - healthsys-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: healthsys-postgres-triagem
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: triagem_db
+      POSTGRES_USER: healthsys
+      POSTGRES_PASSWORD: healthsys
+    networks:
+      - healthsys-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U healthsys -d triagem_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  healthsys-network:
+    external: true
